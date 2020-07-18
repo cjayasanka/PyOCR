@@ -1,2 +1,2 @@
 # PyOCR
-Python OCR for Sinhala language
+Python OCR API hosted in Heroku

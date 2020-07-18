@@ -1,17 +1,27 @@
-import tensorflow as tf
+import numpy as np
+import sys, os
+from fastapi import FastAPI, UploadFile, File
+from starlette.requests import Request
+import io
+import cv2
+import pytesseract
+import re
+from pydantic import BaseModel
 
-mnist = tf.keras.datasets.mnist
+def read_img(img):
+    pytesseract.pytesseract.tesseract_cmd = '/app/.apt/usr/bin/tesseract'
+    text = pytesseract.image_to_string(img)
+    return(text)
+ 
+app = FastAPI()
 
-(x_train, y_train), (x_test, y_test) = mnist.load_data()
-x_train, x_test = x_train / 255.0, x_test / 255.0
-
-model = tf.keras.models.Sequential([
-  tf.keras.layers.Flatten(input_shape=(28, 28)),
-  tf.keras.layers.Dense(128, activation='relu'),
-  tf.keras.layers.Dropout(0.2),
-  tf.keras.layers.Dense(10)
-])
-
-predictions = model(x_train[:1]).numpy()
-
-print(predictions)
+@app.post("/predict/") 
+def prediction(request: Request, file: bytes = File(...) ):
+    if request.method == "POST":
+        image_stream = io.BytesIO(file)
+        image_stream.seek(0)
+        file_bytes = np.asarray(bytearray(image_stream.read()), dtype=np.uint8)
+        frame = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+        label = read_img(frame)
+        return label
+    return "No post request found"
